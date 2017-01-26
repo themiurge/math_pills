@@ -13,8 +13,12 @@ namespace mp {
         {
             if (this->data == data) return;  // prevent self-copy
             double* old_data = this->data;
-            this->data = new double[rows * cols];
-            std::memcpy(this->data, data, rows * cols * sizeof(double));
+            if (data)
+            {
+                this->data = new double[rows * cols];
+                std::memcpy(this->data, data, rows * cols * sizeof(double)); 
+            }
+            else this->data = nullptr;
             if (old_data) delete[] old_data;
             this->rows = rows;
             this->cols = cols;
@@ -24,7 +28,7 @@ namespace mp {
             if (this->data == data) return; // prevent self-move
             double* old_data = this->data;
             this->data = data;
-            delete[] old_data;
+            if (old_data) delete[] old_data;
             this->rows = rows;
             this->cols = cols;
         }
@@ -33,13 +37,15 @@ namespace mp {
         container(const container& c) { this->copy_data(c.data, c.rows, c.cols); }
         container(container&& c) { this->move_data(c.data, c.rows, c.cols); }
         
-        void append(const double& val) {  }
-        
         virtual ~container() { if (data) delete[] data; }
     };
     
-    typedef container vector;
     typedef container matrix;
+    
+    class vector : public container {
+    public:
+        vector() : container() {}
+    };
 
 }
 
