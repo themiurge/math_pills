@@ -58,6 +58,45 @@ TEST_CASE( "Vector construction - size and fill value", "[vector]" ) {
         REQUIRE( v[i] == 1.0 );
 }
 
+TEST_CASE( "Vector construction - initializer list", "[vector]" ) {
+    mp::vector v({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 });
+    REQUIRE( v.getRows() == 10 );
+    REQUIRE( v.getCols() == 1 );
+    for (int i = 0; i != 10; ++i)
+        REQUIRE( v[i] == i+1 );
+}
+
+TEST_CASE( "Vector construction - from array", "[vector]" ) {
+    double arr[100];
+    for (int i = 0; i != 100; ++i) arr[i] = i;
+    mp::vector v(arr, 1, 10);
+    REQUIRE( v.getRows() == 10 );
+    REQUIRE( v.getCols() == 1 );
+    for (int i = 0; i != 10; ++i)
+        REQUIRE( v[i] == i+1 );
+}
+
+TEST_CASE( "Vector construction - linear space", "[vector]" ) {
+    mp::vector v = mp::vector::linspace(1, 10, 10);
+    REQUIRE( v.getRows() == 10 );
+    REQUIRE( v.getCols() == 1 );
+    for (int i = 0; i != 10; ++i)
+        REQUIRE( v[i] == i+1 );
+}
+
+TEST_CASE( "Vector construction - normal distribution", "[vector]" ) {
+    mp::vector v = mp::vector::randn(100000);
+    REQUIRE( v.getRows() == 100000 );
+    REQUIRE( v.getCols() == 1 );
+    REQUIRE( std::abs(v.mean()) < .01 );
+    REQUIRE( std::abs(v.stddev() - 1.0) < .01 );
+    v = mp::vector::randn(100000, 5.0, 14.0);
+    REQUIRE( v.getRows() == 100000 );
+    REQUIRE( v.getCols() == 1 );
+    REQUIRE( std::abs(v.mean() - 5.0) < .01 );
+    REQUIRE( std::abs(v.stddev() - 14.0) < .01 );
+}
+
 TEST_CASE( "Vector construction - copy", "[vector]" ) {
     mp::vector w(10, 1.0);
     mp::vector v(w);
@@ -186,7 +225,7 @@ TEST_CASE( "Assignment operators between vectors: += -= *= /=", "[vector]" ) {
         REQUIRE( res[i] == .5 );
 }
 
-TEST_CASE( "Vector comparisons: ==, !=" ) {
+TEST_CASE( "Vector comparisons: ==, !=", "[vector]" ) {
     mp::vector v(10, 2.0);
     mp::vector w(10, 2.0);
     mp::vector u(10, 1.0);
@@ -196,14 +235,14 @@ TEST_CASE( "Vector comparisons: ==, !=" ) {
     REQUIRE( v != t );
 }
 
-TEST_CASE( "Vector dot products" ) {
+TEST_CASE( "Vector dot products", "[vector]" ) {
     mp::vector v(10, 1.0);
     mp::vector w(10, 1.0);
     REQUIRE( v.dot(w) == 10.0 );
     REQUIRE( mp::dot(v, w) == 10.0 );
 }
 
-TEST_CASE( "Vector math functions" ) {
+TEST_CASE( "Vector math functions", "[vector]" ) {
     mp::vector v(10, -2.0);
     REQUIRE( mp::abs(v) == mp::vector(10, std::abs(-2.0)) );
     REQUIRE( mp::exp(v) == mp::vector(10, std::exp(-2.0)) );
@@ -226,22 +265,10 @@ TEST_CASE( "Vector math functions" ) {
     mp::vector w(10, 4.0);
     REQUIRE( mp::pow(v, 2.0) == w );
     REQUIRE( mp::pow(v, v) == w );
-    //w = mp::vector(10, exp(-2.0));
-/*
-    vector abs(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::abs(v[i]); return w; }
-    vector exp(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::exp(v[i]); return w; }
-    vector exp2(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::exp2(v[i]); return w; }
-    vector log(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::log(v[i]); return w; }
-    vector log10(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::log10(v[i]); return w; }
-    vector log2(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::log2(v[i]); return w; }
-    vector pow(const vector& v, const double& d) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::pow(v[i], d); return w; }
-    vector pow(const vector& v1, const vector& v2) { check_dimensions(v1, v2); vector w(v1.rows); for (unsigned long i = 0; i != v1.rows; ++i) w[i] = std::pow(v1[i], v2[i]); return w; }
-    vector sqrt(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::sqrt(v[i]); return w; }
-    vector sin(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::sin(v[i]); return w; }
-    vector cos(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::cos(v[i]); return w; }
-    vector tan(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::tan(v[i]); return w; }
-    vector asin(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::asin(v[i]); return w; }
-    vector acos(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::acos(v[i]); return w; }
-    vector atan(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::atan(v[i]); return w; }
-*/
+}
+
+TEST_CASE( "Vector stats", "[vector]" ) {
+    mp::vector v = mp::vector::linspace(0, 9, 10);
+    REQUIRE( v.mean() == 4.5 );
+    REQUIRE( v.var() == 8.25 );
 }

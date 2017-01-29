@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <iostream>
 #include <functional>
+#include <initializer_list>
+#include <random>
 
 #define IDX(i, j, cols) ((i)*(cols)+(j))
 
@@ -80,6 +82,30 @@ namespace mp {
         container(const unsigned long& rows, const unsigned long& cols, const double& d) { this->data = ((rows*cols) ? new double[rows*cols] : nullptr); this->rows = rows; this->cols = cols; fill(d); }
         container(const container& c) { this->copy_data(c.data, c.rows, c.cols); }
         container(container&& c) { this->move_data(c.data, c.rows, c.cols); }
+        container(std::initializer_list<std::initializer_list<double>> l) 
+        { 
+            rows = l.size(); 
+            if (rows && (cols = l.begin()->size()))
+            {
+                data = new double[rows*cols];
+                unsigned long pos = 0;
+                for (auto& ll : l)
+                {
+                    if (ll.size() != cols) 
+                    {
+                        delete[] data;
+                        throw std::invalid_argument("l");
+                    }
+                    for (auto d : ll)
+                        data[pos++] = d;
+                }
+            }
+            else
+            {
+                cols = 0;
+                data = nullptr;
+            }
+        }
 
         inline void fill(const double& d) { for (auto& elem : *this) elem = d; }
 
@@ -109,9 +135,73 @@ namespace mp {
         vector(const unsigned long& dim, const double& fill_value) : container(dim, 1, fill_value) { }
         vector(const vector& v) { this->copy_data(v.data, v.rows, v.cols); }
         vector(vector&& v) { this->move_data(v.data, v.rows, v.cols); }
+        vector(const double* d, const unsigned long& start, const unsigned long& count) 
+        { 
+            cols = 1; 
+            if ((rows = count) > 0) 
+            { 
+                data = new double[rows]; 
+                std::memcpy(data, d + start, count * sizeof(double)); 
+            } 
+            else 
+                data = nullptr; 
+        }
+        vector(std::initializer_list<double> l)
+        {
+            rows = l.size();
+            cols = 1;
+            if (rows)
+            {
+                data = new double[rows];
+                unsigned long pos = 0;
+                for (auto d : l)
+                    data[pos++] = d;
+            }
+            else
+                data = nullptr;
+        }
 
         static vector from(const vector& v1, const vector& v2, std::function<double(const double&, const double&)> op) { check_dimensions(v1, v2); return vector(v1, v2, op); }
         static vector from(const vector& v, std::function<double(const double&)> op) { return vector(v, op); }
+
+        static vector linspace(const double& start, const double& end, const unsigned long& n) 
+        { 
+            vector v;
+            v.cols = 1; 
+            if ((v.rows = n) > 0)
+            {
+                v.data = new double[n];
+                if (n == 1) v.data[0] = (end - start) / 2.0;
+                else 
+                {
+                    double interval = (end - start) / (double)(n-1);
+                    for (unsigned long i = 0; i != n; ++i)
+                        v.data[i] = start + interval * (double)i;
+                }
+            }
+            else
+                v.data = nullptr;
+            return v;
+        }
+
+        static vector randn(const unsigned long& n, const double& mean = 0.0, const double& sigma = 1.0)
+        {
+            vector v;
+            v.cols = 1;
+            if ((v.rows = n) > 0)
+            {
+                std::random_device rd;
+                std::mt19937 gen(rd());
+
+                std::normal_distribution<double> d(mean, sigma);
+                v.data = new double[v.rows];
+                for (auto& elem : v)
+                    elem = d(gen);
+            }
+            else
+                v.data = nullptr;
+            return v;
+        }
 
         inline const unsigned long& size() const { return rows; }
 
@@ -181,6 +271,10 @@ namespace mp {
         }
 
         inline void append(const double& d) { this->resize(this->rows+1); this->data[this->rows-1] = d; }
+
+        inline double mean() const { if (!rows) return 0.0; double m = 0.0; for (const auto& d : *this) m += d; return m / (double)rows; }
+        inline double var() const { if (!rows) return 0.0; double m = mean(), v = 0.0; for (const auto& d : *this) v += (d-m)*(d-m); return v / (double)rows; }
+        inline double stddev() const { return std::sqrt(var()); }
     };
 
     inline vector operator+(const vector& v, const double& d) { vector res(v); for (auto& elem : res) elem += d; return res; }
