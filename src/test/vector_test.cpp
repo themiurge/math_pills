@@ -226,7 +226,6 @@ TEST_CASE( "Vector math functions" ) {
     mp::vector w(10, 4.0);
     REQUIRE( mp::pow(v, 2.0) == w );
     REQUIRE( mp::pow(v, v) == w );
-    
     //w = mp::vector(10, exp(-2.0));
 /*
     vector abs(const vector& v) { vector w(v.rows); for (unsigned long i = 0; i != v.rows; ++i) w[i] = std::abs(v[i]); return w; }
