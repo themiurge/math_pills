@@ -2,12 +2,17 @@
 #include "catch.hpp"
 #include "../core/core.hpp"
 
-TEST_CASE( "Empty vector creation", "[vector]" ) {
+TEST_CASE( "Empty vector creation", "[vector]") {
     mp::vector v;
-    REQUIRE( v.getRows() == 0 );
-    REQUIRE( v.getCols() == 1 );
+    REQUIRE( v.size() == 0 );
 }
 
+TEST_CASE( "Vector construction - fill", "[vector]" ) {
+    mp::vector v({10});
+    REQUIRE (v.size() == 1);
+    REQUIRE (v.shape()[0] == 1);
+}
+/*
 TEST_CASE( "Vector append", "[vector]" ) {
     mp::vector v;
     REQUIRE( v.getRows() == 0 );
@@ -40,22 +45,6 @@ TEST_CASE( "Vector resize", "[vector]" ) {
         for (int j = 0; j != i; ++j)
             REQUIRE( v[j] == 0 );
     }  
-}
-
-TEST_CASE( "Vector construction - size only", "[vector]" ) {
-    mp::vector v(10);
-    REQUIRE( v.getRows() == 10 );
-    REQUIRE( v.getCols() == 1 );
-    for (int i = 0; i != 10; ++i)
-        REQUIRE( v[i] == 0.0 );
-}
-
-TEST_CASE( "Vector construction - size and fill value", "[vector]" ) {
-    mp::vector v(10, 1.0);
-    REQUIRE( v.getRows() == 10 );
-    REQUIRE( v.getCols() == 1 );
-    for (int i = 0; i != 10; ++i)
-        REQUIRE( v[i] == 1.0 );
 }
 
 TEST_CASE( "Vector construction - initializer list", "[vector]" ) {
@@ -133,7 +122,7 @@ TEST_CASE( "Vector assignment - move", "[vector]" ) {
         REQUIRE( v[i] == 1.0 );    
 }
 
-TEST_CASE( "Operations between vectors and scalars/unary operators: +-*/, +-", "[vector]" ) {
+TEST_CASE( "Operations between vectors and scalars/unary operators: +-* /, +-", "[vector]" ) {
     mp::vector v(10);
     mp::vector w = v + 1.0;
     for (int i = 0; i != 10; ++i)
@@ -167,7 +156,7 @@ TEST_CASE( "Operations between vectors and scalars/unary operators: +-*/, +-", "
         REQUIRE( w[i] == -2.0 );
 }
 
-TEST_CASE( "Operations between vectors: +-*/", "[vector]" ) {
+TEST_CASE( "Operations between vectors: +-* /", "[vector]" ) {
     mp::vector v(10, 2.0);
     mp::vector w(10, 4.0);
     mp::vector res;
@@ -272,3 +261,4 @@ TEST_CASE( "Vector stats", "[vector]" ) {
     REQUIRE( v.mean() == 4.5 );
     REQUIRE( v.var() == 8.25 );
 }
+*/

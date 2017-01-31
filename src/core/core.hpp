@@ -10,11 +10,114 @@
 #include <functional>
 #include <initializer_list>
 #include <random>
-
-#define IDX(i, j, cols) ((i)*(cols)+(j))
+#include <vector>
+#include <memory>
 
 namespace mp {
 
+    // This is the base container class for an arbitrary multi-dimensional matrix
+    // T can be any arithmetic type (std::complex included)
+    template<typename T> class mparray {
+    private:
+
+        // raw data
+        T* _data;
+
+        // array shape is a class invariant, and so is total size
+        std::unique_ptr<std::vector<size_t> > _shape;
+        size_t _size;
+
+        // initializer functions - called by constructors
+        void init(std::initializer_list<size_t> in_shape);
+        void init(std::initializer_list<size_t> in_shape, const T& fill_value);
+        template<typename iter> void init(std::initializer_list<std::initializer_list<iter> > in_data, size_t& level, size_t& index);
+        void init(std::initializer_list<T> in_data, size_t& level, size_t& index);
+        void init(std::initializer_list<int> in_data, size_t& level, size_t& index);
+        void init(std::initializer_list<long> in_data, size_t& level, size_t& index);
+        void init(std::initializer_list<long long> in_data, size_t& level, size_t& index);
+        template<typename init_type> init_internal(std::initializer_list<init_type> in_data, size_t& index);
+
+    public:
+
+        using iterator = T*;
+        using const_iterator = const T*;
+
+        mparray() { init({}); }
+        /*mparray(std::initializer_list<size_t> in_shape) { init(in_shape); }
+        mparray(std::initializer_list<size_t> in_shape, const T& fill_value) { init(in_shape, fill_value); }*/
+        template<typename iter> mparray(std::initializer_list<iter> in_data) 
+        { 
+            _size = in_data.size() ? 1 : 0;
+            _shape = std::unique_ptr<std::vector<size_t> >(new std::vector<size_t>());
+            size_t level = 0;
+            size_t index = 0;
+            init(in_data, level, index); 
+        }
+
+        iterator begin() const { return &_data[0]; }
+        iterator end() const { return &_data[_size]; }
+        const_iterator cbegin() const { return &_data[0]; }
+        const_iterator cend() const { return &_data[_size]; }
+
+        inline const size_t& size() const { return _size; }
+
+        inline const std::vector<size_t>& shape() const { return *_shape; } 
+
+        void fill(const T& fill_value);
+
+        virtual ~mparray() { if (_data) delete[] _data; }
+    };
+
+    // initialization functions
+    template<typename T> inline void mparray<T>::init(std::initializer_list<size_t> in_shape)
+    {
+        _shape = std::unique_ptr<std::vector<size_t> >(new std::vector<size_t>(in_shape));
+        _size = _shape->size() ? 1 : 0;
+        for (const auto& s : *_shape) _size *= s;
+        _data = _size ? new T[_size] : nullptr;
+    }
+    template<typename T> inline void mparray<T>::init(std::initializer_list<size_t> in_shape, const T& fill_value)
+    {
+        init(in_shape);
+        fill(fill_value);
+    }   
+    /*template<typename T, typename iter> inline void mparray<T>::init(std::initializer_list<iter> in_data, const bool& create_shape, size_t& level, size_t& index)
+    {
+        if (create_shape) _shape = std::unique_ptr<std::vector<size_t> >(new std::vector<size_t>({_size = in_data.size()})); // here level == 0
+        for (auto& elem : *this) elem = fill_value;
+    } */
+    template<typename T> inline void mparray<T>::init(std::initializer_list<T> in_data, size_t& level, size_t& index)
+    {
+        if (index == 0)
+        {
+
+            // this is the first call for the last dimension - we can finally allocate data
+            _shape->push_back(in_data.size());
+            _size *= in_data.size();
+            if (_size) _data = new T[_size];
+            else _data = nullptr;
+
+        }
+        else if (in_data.size() != _shape->back())
+        {
+            if (_data) delete[] _data;
+            _data = nullptr;
+            throw std::invalid_argument("in_data");
+        }
+        for (const auto& elem : in_data) _data[index++] = elem;
+    } 
+
+    // fill functions
+    template<typename T> inline void mparray<T>::fill(const T& fill_value)
+    {
+        for (auto& elem : *this) elem = fill_value;
+    } 
+
+    // common placeholders
+    typedef mparray<double> vector;
+    typedef mparray<double> matrix;
+
+/*
     class container {
     protected:
         double* data;
@@ -321,17 +424,7 @@ namespace mp {
         return out;
     }
     
-    /*class matrix : public container {
-        inline void resize(const unsigned long& new_rows, const unsigned long& new_cols)
-        {
-            if (new_cols == cols)
-            {
-                if (new_rows == rows) return;
-
-                rows = new_rows;
-            }
-        }
-    };*/
+    */
 
 }
 
